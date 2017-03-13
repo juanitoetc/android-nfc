@@ -1,0 +1,4 @@
+#Mon Mar 13 17:12:35 ART 2017
+base.0=/home/juani/MyGitHub/android-nfc/Application/build/intermediates/transforms/dex/debug/folders/1000/1f/main
+renamed.0=classes.dex
+file.0=/home/juani/MyGitHub/android-nfc/Application/build/intermediates/transforms/dex/debug/folders/1000/1f/main/classes.dex

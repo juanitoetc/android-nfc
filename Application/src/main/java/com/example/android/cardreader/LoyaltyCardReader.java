@@ -18,6 +18,7 @@ package com.example.android.cardreader;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
+import android.nfc.tech.MifareClassic;
 
 import com.example.android.common.logger.Log;
 
@@ -34,6 +35,24 @@ public class LoyaltyCardReader implements NfcAdapter.ReaderCallback {
     private static final String TAG = "LoyaltyCardReader";
     // AID for our loyalty card service.
     private static final String SAMPLE_LOYALTY_CARD_AID = "F222222222";
+    //Adding some default keys
+
+    private static final byte[][] DEFAULT_KEYS = {
+            {(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF},
+            {(byte)0xa0, (byte)0xa1, (byte)0xa2, (byte)0xa3, (byte)0xa4, (byte)0xa5},
+            {(byte)0xd3, (byte)0xf7, (byte)0xd3, (byte)0xf7, (byte)0xd3, (byte)0xf7},
+            {(byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00},
+            {(byte)0xb0, (byte)0xb1, (byte)0xb2, (byte)0xb3, (byte)0xb4, (byte)0xb5},
+            {(byte)0x4d, (byte)0x3a, (byte)0x99, (byte)0xc3, (byte)0x51, (byte)0xdd},
+            {(byte)0x1a, (byte)0x98, (byte)0x2c, (byte)0x7e, (byte)0x45, (byte)0x9a},
+            {(byte)0xaa, (byte)0xbb, (byte)0xcc, (byte)0xdd, (byte)0xee, (byte)0xff},
+            {(byte)0x71, (byte)0x4c, (byte)0x5c, (byte)0x88, (byte)0x6e, (byte)0x97},
+            {(byte)0x58, (byte)0x7e, (byte)0xe5, (byte)0xf9, (byte)0x35, (byte)0x0f},
+            {(byte)0xa0, (byte)0x47, (byte)0x8c, (byte)0xc3, (byte)0x90, (byte)0x91},
+            {(byte)0x53, (byte)0x3c, (byte)0xb6, (byte)0xc7, (byte)0x23, (byte)0xf6},
+            {(byte)0x8f, (byte)0xd0, (byte)0xa4, (byte)0xf2, (byte)0x56, (byte)0xe9}
+    };
+
     // ISO-DEP command HEADER for selecting an AID.
     // Format: [Class | Instruction | Parameter 1 | Parameter 2]
     private static final String SELECT_APDU_HEADER = "00A40400";
@@ -66,19 +85,42 @@ public class LoyaltyCardReader implements NfcAdapter.ReaderCallback {
         // protocol.
         //
         // In order to communicate with a device using HCE, the discovered tag should be processed
-        // using the IsoDep class.
-        IsoDep isoDep = IsoDep.get(tag);
-        if (isoDep != null) {
+        // using the MIFARE Classic EV1 class.
+        MifareClassic mifare = MifareClassic.get(tag);
+        if (mifare != null) {
             try {
                 // Connect to the remote NFC device
-                isoDep.connect();
+                mifare.connect();
                 // Build SELECT AID command for our loyalty card service.
                 // This command tells the remote device which service we wish to communicate with.
+                int secCount = mifare.getSectorCount();
+                int bCount = 0;
+                int bIndex = 0;
+                boolean auth = false;
+                byte[] data;
+
+                for(int j = 0; j < secCount; j++) {
+                    // 6.1) authenticate the sector
+                    auth = mifare.authenticateSectorWithKeyA(j, DEFAULT_KEYS[0]);
+                    if (auth) {
+                        // 6.2) In each sector - get the block count
+                        bCount = mifare.getBlockCountInSector(j);
+                        bIndex = 0;
+                        for (int i = 0; i < bCount; i++) {
+                            bIndex = mifare.sectorToBlock(j);
+                            // 6.3) Read the block
+                            data = mifare.readBlock(bIndex);
+                            // 7) Convert the data into a string from Hex format.
+                        }
+                    }
+                }
+
+                //Android example code
                 Log.i(TAG, "Requesting remote AID: " + SAMPLE_LOYALTY_CARD_AID);
                 byte[] command = BuildSelectApdu(SAMPLE_LOYALTY_CARD_AID);
                 // Send command to remote device
                 Log.i(TAG, "Sending: " + ByteArrayToHexString(command));
-                byte[] result = isoDep.transceive(command);
+                byte[] result = mifare.transceive(command);
                 // If AID is successfully selected, 0x9000 is returned as the status word (last 2
                 // bytes of the result) by convention. Everything before the status word is
                 // optional payload, which is used here to hold the account number.
