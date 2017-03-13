@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/home/juani/MyGitHub/android-nfc/Application/build/intermediates/res/merged/debug/drawable-xxhdpi/card_background.png",
+        "source": "/home/juani/MyGitHub/android-nfc/Application/src/main/res/drawable-xxhdpi/card_background.png"
+    },
+    {
+        "merged": "/home/juani/MyGitHub/android-nfc/Application/build/intermediates/res/merged/debug/drawable-xxhdpi/ic_launcher.png",
+        "source": "/home/juani/MyGitHub/android-nfc/Application/src/main/res/drawable-xxhdpi/ic_launcher.png"
+    }
+]
