@@ -81,6 +81,7 @@ public class LoyaltyCardReader implements NfcAdapter.ReaderCallback {
     @Override
     public void onTagDiscovered(Tag tag) {
         Log.i(TAG, "New tag discovered");
+        String metaInfo = "";
         // Android's Host-based Card Emulation (HCE) feature implements the ISO-DEP (ISO 14443-4)
         // protocol.
         //
@@ -101,38 +102,23 @@ public class LoyaltyCardReader implements NfcAdapter.ReaderCallback {
 
                 for(int j = 0; j < secCount; j++) {
                     // 6.1) authenticate the sector
-                    auth = mifare.authenticateSectorWithKeyA(j, DEFAULT_KEYS[0]);
-                    if (auth) {
-                        // 6.2) In each sector - get the block count
-                        bCount = mifare.getBlockCountInSector(j);
-                        bIndex = 0;
-                        for (int i = 0; i < bCount; i++) {
+                    for (int ind = 0; ind < DEFAULT_KEYS.length; ind++){
+                        auth = mifare.authenticateSectorWithKeyA(j, DEFAULT_KEYS[ind]);
+                        if (auth) {
+                            // 6.2) In each sector - get the block count
+                            bCount = mifare.getBlockCountInSector(j);
                             bIndex = mifare.sectorToBlock(j);
-                            // 6.3) Read the block
-                            data = mifare.readBlock(bIndex);
-                            // 7) Convert the data into a string from Hex format.
+                            for (int i = 0; i < bCount; i++) {
+                                // 6.3) Read the block
+                                data = mifare.readBlock(bIndex);
+                                // 7) Convert the data into a string from Hex format.
+                                metaInfo = " Block " + bIndex + " : " + ByteArrayToHexString(data) + "\n";
+                                bIndex++;
+                                Log.i(TAG, "KeyA:" + DEFAULT_KEYS[ind] + metaInfo);
+
+                            }
                         }
                     }
-                }
-
-                //Android example code
-                Log.i(TAG, "Requesting remote AID: " + SAMPLE_LOYALTY_CARD_AID);
-                byte[] command = BuildSelectApdu(SAMPLE_LOYALTY_CARD_AID);
-                // Send command to remote device
-                Log.i(TAG, "Sending: " + ByteArrayToHexString(command));
-                byte[] result = mifare.transceive(command);
-                // If AID is successfully selected, 0x9000 is returned as the status word (last 2
-                // bytes of the result) by convention. Everything before the status word is
-                // optional payload, which is used here to hold the account number.
-                int resultLength = result.length;
-                byte[] statusWord = {result[resultLength-2], result[resultLength-1]};
-                byte[] payload = Arrays.copyOf(result, resultLength-2);
-                if (Arrays.equals(SELECT_OK_SW, statusWord)) {
-                    // The remote NFC device will immediately respond with its stored account number
-                    String accountNumber = new String(payload, "UTF-8");
-                    Log.i(TAG, "Received: " + accountNumber);
-                    // Inform CardReaderFragment of received account number
-                    mAccountCallback.get().onAccountReceived(accountNumber);
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Error communicating with card: " + e.toString());
