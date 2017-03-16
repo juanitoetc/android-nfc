@@ -112,10 +112,10 @@ public class LoyaltyCardReader implements NfcAdapter.ReaderCallback {
                                 // 6.3) Read the block
                                 data = mifare.readBlock(bIndex);
                                 // 7) Convert the data into a string from Hex format.
-                                metaInfo = " Block " + bIndex + " : " + ByteArrayToHexString(data) + "\n";
+                                Log.i(TAG, "Sector:" + j + " Block:" + bIndex + " Key:" + ByteArrayToHexString(DEFAULT_KEYS[ind]) + "\n");
+                                String str_data = new String(data, "UTF-8");
+                                Log.i(TAG, "Data:" + str_data + "\n");
                                 bIndex++;
-                                Log.i(TAG, "KeyA:" + DEFAULT_KEYS[ind] + metaInfo);
-
                             }
                         }
                     }
